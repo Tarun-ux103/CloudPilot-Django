@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard | CloudPilot{% endblock %}
+{% block page_heading %}Overview{% endblock %}
+{% block content %}
+<section class="welcome-row"><div><h2>Cloud resource overview</h2><p>Monitor simulated workloads, forecast demand and review cost-saving recommendations.</p></div><a class="btn btn-primary" href="{% url 'add_server' %}">＋ Add server</a></section>
+<section class="kpi-grid">
+  <article class="kpi-card"><div class="kpi-label">Managed servers</div><div class="kpi-value">{{ server_count }}</div><div class="kpi-foot">{{ running_count }} currently running</div><span class="kpi-icon blue">▣</span></article>
+  <article class="kpi-card"><div class="kpi-label">Average CPU</div><div class="kpi-value">{{ avg_cpu }}<small>%</small></div><div class="kpi-foot">Latest reading per server</div><span class="kpi-icon purple">◉</span></article>
+  <article class="kpi-card"><div class="kpi-label">Average memory</div><div class="kpi-value">{{ avg_memory }}<small>%</small></div><div class="kpi-foot">Latest reading per server</div><span class="kpi-icon teal">▤</span></article>
+  <article class="kpi-card"><div class="kpi-label">Open alerts</div><div class="kpi-value">{{ open_alert_count }}</div><div class="kpi-foot">Require review</div><span class="kpi-icon orange">!</span></article>
+</section>
+<section class="content-grid">
+  <article class="panel chart-panel"><div class="panel-heading"><div><h3>Workload trend</h3><p>Latest CPU and memory readings · {{ servers.0.name|default:'No server yet' }}</p></div><span class="subtle-tag">SAMPLE SERIES</span></div>
+    {% if chart_labels != '[]' %}<div class="chart-legend"><span><i class="legend-blue"></i> CPU</span><span><i class="legend-purple"></i> Memory</span></div><div class="chart-wrap"><canvas id="workloadChart" height="115"></canvas></div>{% else %}<div class="empty-state">Add demo data to see workload trends.</div>{% endif %}
+  </article>
+  <article class="panel alert-panel"><div class="panel-heading"><div><h3>Recent alerts</h3><p>Latest workload warnings</p></div><span class="count-badge">{{ open_alert_count }}</span></div>
+    {% for alert in open_alerts %}<div class="alert-row"><span class="severity {{ alert.level }}">{{ alert.level|upper }}</span><div class="alert-copy"><strong>{{ alert.server.name }}</strong><p>{{ alert.message|truncatechars:90 }}</p><small>{{ alert.created_at|date:'d M, H:i' }}</small></div><form method="post" action="{% url 'resolve_alert' alert.id %}">{% csrf_token %}<button class="icon-btn" title="Resolve alert">✓</button></form></div>{% empty %}<div class="empty-state compact">No open alerts. Your simulated environment looks quiet.</div>{% endfor %}
+  </article>
+</section>
+<section class="panel table-panel"><div class="panel-heading"><div><h3>Server fleet</h3><p>Latest resource readings and optimization actions</p></div><a class="text-link" href="{% url 'add_server' %}">Manage servers →</a></div>
+  <div class="table-scroll"><table><thead><tr><th>SERVER</th><th>INSTANCE</th><th>CPU</th><th>MEMORY</th><th>STATUS</th><th>ACTION</th></tr></thead><tbody>
+  {% for server in servers %}
+  <tr><td><a class="server-name" href="{% url 'server_detail' server.id %}"><span class="server-icon">▣</span><span>{{ server.name }}<small>{{ server.region }}</small></span></a></td><td>{{ server.get_vm_type_display }}</td>
+  <td>{% with metric=server.metrics.first %}{% if metric %}<div class="metric-cell"><span>{{ metric.cpu_utilization|floatformat:0 }}%</span><div class="mini-bar"><i style="width:{{ metric.cpu_utilization }}%" class="{% if metric.cpu_utilization >= 80 %}high{% endif %}"></i></div></div>{% else %}—{% endif %}{% endwith %}</td>
+  <td>{% with metric=server.metrics.first %}{% if metric %}<div class="metric-cell"><span>{{ metric.memory_utilization|floatformat:0 }}%</span><div class="mini-bar"><i style="width:{{ metric.memory_utilization }}%" class="{% if metric.memory_utilization >= 85 %}high{% endif %}"></i></div></div>{% else %}—{% endif %}{% endwith %}</td>
+  <td><span class="status-chip {{ server.status }}"><i></i>{{ server.get_status_display }}</span></td><td><div class="row-actions"><a class="btn btn-small btn-light" href="{% url 'server_detail' server.id %}">Details</a><form method="post" action="{% url 'optimize_server' server.id %}">{% csrf_token %}<button class="btn btn-small btn-outline">Optimize</button></form></div></td></tr>
+  {% empty %}<tr><td colspan="6"><div class="empty-state">No servers yet. Add one or load the included demo data using the setup guide.</div></td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+<section class="content-grid lower-grid">
+  <article class="panel"><div class="panel-heading"><div><h3>Add a workload reading</h3><p>Record a new sample for a server</p></div></div>
+    {% if servers %}<form id="quickMetricForm" class="form-grid" method="post" data-base-url="/servers/">{% csrf_token %}<div class="field full"><label for="serverSelect">Server</label><select id="serverSelect" class="form-control">{% for server in servers %}<option value="{{ server.id }}">{{ server.name }}</option>{% endfor %}</select></div>
+    <div class="field"><label>CPU utilization (%)</label><input class="form-control" type="number" name="cpu_utilization" min="0" max="100" step="0.1" value="55" required></div><div class="field"><label>Memory utilization (%)</label><input class="form-control" type="number" name="memory_utilization" min="0" max="100" step="0.1" value="58" required></div>
+    <div class="field"><label>Disk utilization (%)</label><input class="form-control" type="number" name="disk_utilization" min="0" max="100" step="0.1" value="42" required></div><div class="field"><label>Network (Mbps)</label><input class="form-control" type="number" name="network_mbps" min="0" step="0.1" value="80" required></div><div class="field"><label>Requests / second</label><input class="form-control" type="number" name="requests_per_second" min="0" step="0.1" value="450" required></div><div class="field full"><button class="btn btn-primary" type="submit">Save workload reading</button></div></form>{% else %}<p class="muted">Add a server first to record workload readings.</p>{% endif %}
+  </article>
+  <article class="panel"><div class="panel-heading"><div><h3>Latest recommendations</h3><p>Most recent optimization checks</p></div><a class="text-link" href="{% url 'model_status' %}">Model status →</a></div>
+  {% for item in recent_recommendations %}<div class="recommendation-row"><div class="recommend-icon {{ item.action }}">{% if item.action == 'scale_up' %}↗{% elif item.action == 'scale_down' %}↘{% else %}＝{% endif %}</div><div class="recommend-copy"><strong>{{ item.server.name }}</strong><p>{{ item.get_action_display }} · {{ item.recommended_vm|title }} instance</p><small>Predicted CPU {{ item.predicted_cpu }}% · {{ item.created_at|date:'d M, H:i' }}</small></div><span class="saving-value">{% if item.estimated_monthly_savings >= 0 %}${{ item.estimated_monthly_savings|floatformat:2 }}{% else %}- ${{ item.estimated_monthly_savings|floatformat:2|cut:'-' }}{% endif %}<small>/ month</small></span></div>{% empty %}<div class="empty-state compact">No recommendations yet. Run Optimize on a server.</div>{% endfor %}
+  </article>
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+window.cloudPilotChartData = {labels: {{ chart_labels|safe }}, cpu: {{ chart_cpu|safe }}, memory: {{ chart_memory|safe }}};
+</script>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Add server | CloudPilot{% endblock %}
+{% block page_heading %}Add server{% endblock %}
+{% block content %}
+<section class="form-page"><div class="panel form-panel"><div class="panel-heading"><div><h3>Register a simulated server</h3><p>Choose a simple instance size. CloudPilot assigns the demo vCPU, memory and hourly price.</p></div></div>
+<form method="post" class="form-grid">{% csrf_token %}
+  {% for field in form %}<div class="field {% if field.name == 'name' or field.name == 'region' %}full{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}{% for error in field.errors %}<small class="error-text">{{ error }}</small>{% endfor %}</div>{% endfor %}
+  {% for error in form.non_field_errors %}<div class="field full error-text">{{ error }}</div>{% endfor %}
+  <div class="field full form-actions"><a class="btn btn-light" href="{% url 'dashboard' %}">Cancel</a><button class="btn btn-primary" type="submit">Add server</button></div>
+</form></div><aside class="panel info-panel"><div class="info-symbol">✦</div><h3>Demo instance sizes</h3><div class="plan-line"><strong>Small</strong><span>2 vCPU · 4 GB RAM</span><b>$0.12/hr</b></div><div class="plan-line"><strong>Medium</strong><span>4 vCPU · 8 GB RAM</span><b>$0.24/hr</b></div><div class="plan-line"><strong>Large</strong><span>8 vCPU · 16 GB RAM</span><b>$0.48/hr</b></div><p class="fine-print">Prices are illustrative values used by this local simulator, not current AWS or Azure prices.</p></aside></section>
+{% endblock %}

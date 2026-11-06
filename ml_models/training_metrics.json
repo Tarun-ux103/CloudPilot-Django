@@ -1,0 +1,55 @@
+{
+  "rows": 1200,
+  "features": [
+    "cpu_utilization",
+    "memory_utilization",
+    "disk_utilization",
+    "network_mbps",
+    "requests_per_second",
+    "hour"
+  ],
+  "cpu_mae": 6.765,
+  "cpu_r2": 0.9,
+  "memory_mae": 5.276,
+  "memory_r2": 0.925,
+  "action_accuracy": 0.779,
+  "action_report": {
+    "maintain": {
+      "precision": 0.8389830508474576,
+      "recall": 0.7443609022556391,
+      "f1-score": 0.7888446215139442,
+      "support": 133.0
+    },
+    "scale_down": {
+      "precision": 0.5238095238095238,
+      "recall": 0.7857142857142857,
+      "f1-score": 0.6285714285714286,
+      "support": 14.0
+    },
+    "scale_up": {
+      "precision": 0.7623762376237624,
+      "recall": 0.8279569892473119,
+      "f1-score": 0.7938144329896907,
+      "support": 93.0
+    },
+    "accuracy": 0.7791666666666667,
+    "macro avg": {
+      "precision": 0.7083896040935812,
+      "recall": 0.7860107257390788,
+      "f1-score": 0.7370768276916878,
+      "support": 240.0
+    },
+    "weighted avg": {
+      "precision": 0.7909127883127295,
+      "recall": 0.7791666666666667,
+      "f1-score": 0.7814211538724826,
+      "support": 240.0
+    }
+  },
+  "trained_models": [
+    "RandomForestRegressor (CPU)",
+    "RandomForestRegressor (memory)",
+    "DecisionTreeClassifier (scaling action)",
+    "IsolationForest (anomaly detection)"
+  ]
+}
